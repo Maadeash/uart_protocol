@@ -20,7 +20,7 @@ UART mainly uses two communication lines:
 - TX (Transmit)
 - RX (Receive)
 
-Due to its simple architecture and easy implementation, UART is widely used in FPGA and SoC designs.
+Due to its simple architecture and easy implementation,UART is widely used in FPGA and SoC designs.
 
 ---
 
