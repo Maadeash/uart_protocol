@@ -1,0 +1,306 @@
+`timescale 1ns/1ps
+
+module baudgen #(parameter n=1,m=1)(
+  input clk,rst,
+  output [n-1:0]q,
+  output max_tck
+);
+  reg [n-1:0]r_reg;
+  
+  assign q=r_reg;
+  assign max_tck=(r_reg==(m-1))?1'b1:1'b0;
+  
+  always @(posedge clk or posedge rst)
+    begin
+      if(rst)
+        r_reg<=0;
+      else if(r_reg==(m-1))
+        r_reg<=0;
+      else
+        r_reg<=r_reg+1'b1;
+    end
+endmodule
+
+module fifo #(parameter d=8,w=4)(
+  input clk,rst,
+  input [d-1:0]w_data,
+  input wr,rd,
+  output full,empty,
+  output [d-1:0]r_data
+);
+  reg [d-1:0]array_mem[0:(2**w)-1];
+  reg [w-1:0]wr_ptr,rd_ptr;
+  reg [w:0]count;
+  
+  assign full=(count==(2**w));
+  assign empty=(count==0);
+  assign r_data=array_mem[rd_ptr];
+  
+  wire do_wr=wr&~full;
+  wire do_rd=rd&~empty;
+  
+  always @(posedge clk or posedge rst)
+    begin
+      if(rst)
+        begin
+          wr_ptr<=0;
+          rd_ptr<=0;
+          count<=0;
+        end
+      else
+        begin
+          if(do_wr)
+            begin
+              array_mem[wr_ptr]<=w_data;
+              wr_ptr<=wr_ptr+1'b1;
+            end
+            
+          if(do_rd)
+            rd_ptr<=rd_ptr+1'b1;
+            
+          case({do_wr,do_rd})
+            2'b10:count<=count+1'b1;
+            2'b01:count<=count-1'b1;
+            default:count<=count;
+          endcase
+        end
+    end
+endmodule
+
+module uart_tx #(parameter dbit=8,sb_tck=16)(
+  input clk,rst,
+  input [7:0]din,
+  input tx_start,s_tck,
+  output reg tx_done_tck,
+  output tx
+);
+  localparam idle=2'd0,start=2'd1,data=2'd2,stop=2'd3;
+  
+  reg [1:0]state,next_state;
+  reg [3:0]s,s_next;
+  reg [2:0]n,n_next;
+  reg [7:0]b,b_next;
+  reg tx_reg,tx_next;
+  
+  always @(posedge clk or posedge rst)
+    begin
+      if(rst)
+        begin
+          state<=idle;
+          s<=0;
+          n<=0;
+          b<=0;
+          tx_reg<=1'b1;
+        end
+      else
+        begin
+          state<=next_state;
+          s<=s_next;
+          n<=n_next;
+          b<=b_next;
+          tx_reg<=tx_next;
+        end
+    end
+    
+  always @(*)
+    begin
+      next_state=state;
+      s_next=s;
+      n_next=n;
+      b_next=b;
+      tx_next=tx_reg;
+      tx_done_tck=1'b0;
+      
+      case(state)
+        idle:
+          begin
+            tx_next=1'b1;
+            if(tx_start)
+              begin
+                next_state=start;
+                s_next=0;
+                n_next=0;
+                b_next=din;
+              end
+          end
+          
+        start:
+          begin
+            tx_next=1'b0;
+            if(s_tck)
+              begin
+                if(s==4'd15)
+                  begin
+                    next_state=data;
+                    s_next=0;
+                    n_next=0;
+                  end
+                else
+                  s_next=s+1'b1;
+              end
+          end
+          
+        data:
+          begin
+            tx_next=b[0];
+            if(s_tck)
+              begin
+                if(s==4'd15)
+                  begin
+                    s_next=0;
+                    b_next=b>>1;
+                    if(n==(dbit-1))
+                      next_state=stop;
+                    else
+                      n_next=n+1'b1;
+                  end
+                else
+                  s_next=s+1'b1;
+              end
+          end
+          
+        stop:
+          begin
+            tx_next=1'b1;
+            if(s_tck)
+              begin
+                if(s==sb_tck-1)
+                  begin
+                    s_next=0;
+                    next_state=idle;
+                    tx_done_tck=1'b1;
+                  end
+                else
+                  s_next=s+1'b1;
+              end
+          end
+      endcase
+    end
+    
+  assign tx=tx_reg;
+endmodule
+
+module uart_rx #(parameter dbit=8,sb_tck=16)(
+  input clk,rst,
+  input rx,s_tck,
+  output reg rx_done_tck,
+  output [7:0]dout
+);
+  localparam idle=2'd0,start=2'd1,data=2'd2,stop=2'd3;
+  
+  reg [1:0]state,next_state;
+  reg [3:0]s,s_next;
+  reg [2:0]n,n_next;
+  reg [7:0]b,b_next;
+  
+  always @(posedge clk or posedge rst)
+    begin
+      if(rst)
+        begin
+          state<=idle;
+          s<=0;
+          n<=0;
+          b<=0;
+        end
+      else
+        begin
+          state<=next_state;
+          s<=s_next;
+          n<=n_next;
+          b<=b_next;
+        end
+    end
+    
+  always @(*)
+    begin
+      next_state=state;
+      s_next=s;
+      n_next=n;
+      b_next=b;
+      rx_done_tck=1'b0;
+      
+      case(state)
+        idle:
+          begin
+            if(~rx)
+              begin
+                next_state=start;
+                s_next=0;
+              end
+          end
+          
+        start:
+          begin
+            if(s_tck)
+              begin
+                if(s==4'd7)
+                  begin
+                    next_state=data;
+                    s_next=0;
+                    n_next=0;
+                  end
+                else
+                  s_next=s+1'b1;
+              end
+          end
+          
+        data:
+          begin
+            if(s_tck)
+              begin
+                if(s==4'd15)
+                  begin
+                    s_next=0;
+                    b_next={rx,b[7:1]};
+                    if(n==(dbit-1))
+                      next_state=stop;
+                    else
+                      n_next=n+1'b1;
+                  end
+                else
+                  s_next=s+1'b1;
+              end
+          end
+          
+        stop:
+          begin
+            if(s_tck)
+              begin
+                if(s==sb_tck-1)
+                  begin
+                    s_next=0;
+                    next_state=idle;
+                    rx_done_tck=1'b1;
+                  end
+                else
+                  s_next=s+1'b1;
+              end
+          end
+      endcase
+    end
+    
+  assign dout=b;
+endmodule
+
+module top #(parameter dbit=8,sb_tck=16,n=10,m=651,fifo_addbit=2)(
+  input clk,rst,
+  input [7:0]w_data,
+  input rd,wr,rx,
+  output tx,tx_full,rx_empty,
+  output [7:0]r_data
+);
+  wire max_tck,tx_empty,rx_full;
+  wire tx_done_tck,rx_done_tck;
+  wire [7:0]tx_fifo_out,rx_data_out;
+  wire [n-1:0]q;
+  
+  baudgen #(.n(n),.m(m)) bg(.clk(clk),.rst(rst),.q(q),.max_tck(max_tck));
+  
+  fifo #(.d(dbit),.w(fifo_addbit)) f_tx(.clk(clk),.rst(rst),.w_data(w_data),.wr(wr),.rd(tx_done_tck),.full(tx_full),.empty(tx_empty),.r_data(tx_fifo_out));
+  
+  uart_tx #(.dbit(dbit),.sb_tck(sb_tck)) utx(.clk(clk),.rst(rst),.din(tx_fifo_out),.tx_start(~tx_empty),.s_tck(max_tck),.tx_done_tck(tx_done_tck),.tx(tx));
+  
+  uart_rx #(.dbit(dbit),.sb_tck(sb_tck)) urx(.clk(clk),.rst(rst),.rx(rx),.s_tck(max_tck),.rx_done_tck(rx_done_tck),.dout(rx_data_out));
+  
+  fifo #(.d(dbit),.w(fifo_addbit)) f_rx(.clk(clk),.rst(rst),.w_data(rx_data_out),.wr(rx_done_tck),.rd(rd),.full(rx_full),.empty(rx_empty),.r_data(r_data));
+endmodule
