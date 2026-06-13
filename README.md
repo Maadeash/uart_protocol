@@ -78,7 +78,7 @@ The project was implemented using:
 
 ## Proof / Results
 
-### Functional Verification Waveform
+### Functional Verification 
 
 <img width="1600" height="841" alt="image" src="https://github.com/user-attachments/assets/d8676977-52c3-4177-b654-972b68a7a20c" />
 
