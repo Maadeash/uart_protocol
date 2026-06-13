@@ -1,268 +1,120 @@
-# FIFO-Based UART RTL Design and Functional Verification using Verilog,SystemVerilog,SVA and Synopsys VCS
+# UART Protocol RTL-to-GDSII Implementation with SystemVerilog Verification
 
-## Introduction
+A complete UART design and implementation project covering RTL development,functional verification,synthesis and physical design up to GDSII.
 
-UART (Universal Asynchronous Receiver Transmitter) is an asynchronous serial communication protocol used for transmitting and receiving data between digital systems.
+## Overview
 
-Unlike synchronous protocols, UART does not require a separate clock signal for communication. Both transmitter and receiver communicate using a predefined baud rate.
+This project implements a FIFO-based UART architecture with:
 
-UART is widely used in:
-
-- FPGA communication
-- Embedded systems
-- Microcontrollers
-- GPS modules
-- Bluetooth modules
-- Serial debugging
-
-UART mainly uses two communication lines:
-
-- TX (Transmit)
-- RX (Receive)
-
-Due to its simple architecture and easy implementation,UART is widely used in FPGA and SoC designs.
-
----
-
-# UART Frame Format
-
-The UART frame used in this project contains:
-
-| Start Bit | 8 Data Bits | Stop Bit |
-|------------|--------------|------------|
-
-
-# UART Architecture
-
-The UART design consists of the following modules:
-
-- Baud Rate Generator
-- UART Transmitter
-- UART Receiver
+- Baud rate generator
+- UART transmitter
+- UART receiver
 - TX FIFO
 - RX FIFO
-- Top Module
 
-System specifications:
+The design was verified using a SystemVerilog testbench with constrained-random stimulus,scoreboarding,coverage and assertions.  
+RTL-to-GDSII implementation was done using Cadence Genus and Cadence Innovus.
 
-- Clock Frequency = 100 MHz
-- Baud Rate = 9600
-- Oversampling = 16x
+## Features
 
----
+- Parameterized UART RTL
+- FIFO-based buffering
+- Start bit and stop bit handling
+- Self-checking verification environment
+- Functional coverage closure
+- Assertion-based checks
+- Synthesis and physical implementation flow
+- Timing closure achieved
 
-# Baud Rate Generator
+## RTL Modules
 
-The baud rate generator produces sampling ticks required for UART communication.
+### `baudgen`
+Generates baud tick pulses for UART operation.
 
-Formula used:
+### `fifo`
+Synchronous FIFO used for transmit and receive buffering.
 
-m = Clock Frequency / (Baud Rate × Oversampling)
+### `uart_tx`
+UART transmitter FSM for serial data transfer.
 
-For this project:
+### `uart_rx`
+UART receiver FSM for serial data capture.
 
-m = 100000000 / (9600 × 16)
+### `top`
+Top-level module integrating baud generator,UART TX,RX and FIFOs.
 
-m = 651
+## Verification Environment
 
-The baud generator resets automatically after reaching the maximum count.
+The design was verified using SystemVerilog with:
 
----
-
-# FIFO Design
-
-Synchronous FIFOs are used for buffering transmitted and received data.
-
-## TX FIFO
-- Stores data before transmission
-- Prevents transmitter underflow
-
-## RX FIFO
-- Stores received data
-- Prevents receiver overflow
-
-FIFO features include:
-
-- Full detection
-- Empty detection
-- Read and write pointer control
-
-
----
-
-# Important UART Signals
-
-| Signal | Description |
-|--------|-------------|
-| clk | System clock |
-| rst | Reset signal |
-| tx | UART transmit line |
-| rx | UART receive line |
-| w_data | Data written into TX FIFO |
-| r_data | Data received from RX FIFO |
-| wr | Write enable for TX FIFO |
-| rd | Read enable for RX FIFO |
-| tx_full | TX FIFO full indication |
-| rx_empty | RX FIFO empty indication |
-
----
-
-# Tools Used
-
-- Vivado
-- Synopsys VCS
-
----
-
-# Languages Used
-
-## Design
-- Verilog HDL
-
-## Verification
-- SystemVerilog
-
----
-
-# Verification Environment
-
-The UART protocol was verified using a SystemVerilog verification environment.
-
-Verification components include:
-
-- Interface with clocking blocks
-- Transaction class
-- Constraint-based randomization
 - Generator
 - Driver
 - Monitor
 - Scoreboard
-- Functional Coverage
-- Assertions (SVA)
-- Mailbox communication
-- Self-checking testbench
-- Loopback verification
-- Coverage closure event
+- Functional coverage
+- Assertions
 
----
+### Coverage Points
 
-# Interface
+- Data range bins
+- Corner cases such as `0x00`,`0xFF`,`0xAA`,`0x55`
 
-The interface connects DUT and verification components using clocking blocks and modports.
+### Verification Result
 
-Features:
-- Driver clocking block
-- Monitor clocking block
-- Shared DUT access
+- Scoreboard: PASS
+- Functional coverage: 100%
 
----
+## Physical Design Flow
 
-# Generator
+The project was implemented using:
 
-The generator creates randomized UART transactions and sends them to the driver using mailbox communication.
+- **Cadence Genus** for synthesis
+- **Cadence Innovus** for floorplanning,placement,CTS,routing and final GDS generation
 
----
+### Timing Result
 
-# Driver
+- Setup slack met
+- Timing closure achieved
 
-The driver performs:
+## Proof / Results
 
-- TX FIFO write operations
-- RX FIFO read operations
-- DUT stimulus generation
+### Functional Verification Waveform
 
-The driver waits for:
-- TX FIFO availability
-- RX FIFO data reception
-
----
-
-# Monitor
-
-The monitor passively observes DUT outputs and captures received UART data.
-
----
-
-# Scoreboard
-
-The scoreboard compares:
-
-- Expected transmitted data
-- Actual received data
-
----
-
-# Functional Coverage
-
-Functional coverage is implemented using covergroups.
-
-Coverage bins include:
-
-- LOW range data
-- MID range data
-- HIGH range data
-
-This ensures proper data-space verification.
-
----
-
-# Assertions
-
-Assertions are implemented to verify protocol correctness.
-
-Assertions check:
-
-- TX idle HIGH after reset
-- RX FIFO empty after reset
-- TX FIFO not full after reset
-
----
-
-# Loopback Verification
-
-The UART design uses loopback verification.
-
-TX → RX
-
-The transmitter output is connected directly to the receiver input for self-verification.
-
----
-
-# Synthesized and Implemented Design(Using Vivado):
-
-<img width="1574" height="733" alt="image" src="https://github.com/user-attachments/assets/0ecaeffa-d8ab-4624-ae3f-854e4f759c01" />
+<img width="1600" height="841" alt="image" src="https://github.com/user-attachments/assets/d8676977-52c3-4177-b654-972b68a7a20c" />
 
 
----
+### Simulation Output
 
-# Model Waveform:
-
-<img width="1379" height="379" alt="image" src="https://github.com/user-attachments/assets/b12de688-9e43-4252-81fc-92cf3a431d8f" />
-
----
-
-# Output Waveform(Simulated using Synopsys VCS):
-
-<img width="1600" height="852" alt="image" src="https://github.com/user-attachments/assets/bf09623a-8d21-4955-a9c5-96b145442167" />
-
----
-# Functional Coverage:
-
-<img width="1600" height="841" alt="image" src="https://github.com/user-attachments/assets/01b8b5f8-7fd6-496f-819c-1acd82bc0e8c" />
+<img width="1600" height="852" alt="image" src="https://github.com/user-attachments/assets/6a62f0e4-1061-4bbc-bcde-f105ccbfd328" />
 
 
----
+### Synthesis Result
 
-# Applications of UART
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/4c8ec35c-0349-4a9a-9a30-3c5e4aca5be1" />
 
-- FPGA communication
-- Embedded systems
-- Serial communication
-- Debugging applications
-- Peripheral communication
 
----
+### Layout / Floorplan
 
-# Conclusion
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/a28c7b8c-d522-4269-9827-f1a225cd8595" />
 
-UART protocol was successfully designed using Verilog HDL and verified using a SystemVerilog verification environment. The design includes UART transmitter, UART receiver, baud rate generator, and FIFO modules. Functional verification was performed using generator, driver, monitor, scoreboard, assertions, and coverage components. Simulation results verified successful UART data transmission and reception using loopback verification.
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/33fe5997-a288-467e-9762-4f6b6084bc66" />
+
+
+
+### Timing Report
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/b8e6c1a8-de8e-4acd-aa6b-6b811a07bda7" />
+
+
+## Tools Used
+
+- Synopsys VCS
+- Cadence Genus
+- Cadence Innovus
+- DVE
+
+## Languages Used
+
+- Verilog(RTL Design)
+- System Verilog(Verification)
+
