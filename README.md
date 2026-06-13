@@ -1,4 +1,4 @@
-# UART Protocol Design and Verification using Verilog and SystemVerilog
+# FIFO-Based UART RTL Design and Functional Verification using Verilog,SystemVerilog,SVA and Synopsys VCS
 
 ## Introduction
 
@@ -250,29 +250,6 @@ The transmitter output is connected directly to the receiver input for self-veri
 
 <img width="1600" height="841" alt="image" src="https://github.com/user-attachments/assets/01b8b5f8-7fd6-496f-819c-1acd82bc0e8c" />
 
-
-
-# Source Files
-
-## Design Files
-
-- baudgen.v
-- fifo.v
-- uart_tx.v
-- uart_rx.v
-- top.v
-
-## Verification Files
-
-- uart_if.sv
-- uart_transaction.sv
-- uart_generator.sv
-- uart_driver.sv
-- uart_monitor.sv
-- uart_scoreboard.sv
-- uart_coverage.sv
-- uart_assertions.sv
-- tb_uart_vip.sv
 
 ---
 
