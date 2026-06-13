@@ -24,18 +24,6 @@ Due to its simple architecture and easy implementation,UART is widely used in FP
 
 ---
 
-# Features of UART
-
-- Asynchronous serial communication
-- Full duplex communication
-- Configurable baud rate
-- FIFO-based buffering
-- FSM-based transmitter and receiver
-- Low hardware complexity
-- Easy FPGA implementation
-
----
-
 # UART Frame Format
 
 The UART frame used in this project contains:
@@ -43,14 +31,6 @@ The UART frame used in this project contains:
 | Start Bit | 8 Data Bits | Stop Bit |
 |------------|--------------|------------|
 
-Configuration used:
-
-- 1 Start Bit
-- 8 Data Bits
-- 1 Stop Bit
-- No Parity Bit
-
----
 
 # UART Architecture
 
@@ -107,46 +87,6 @@ FIFO features include:
 - Empty detection
 - Read and write pointer control
 
----
-
-# UART Transmitter FSM
-
-The UART transmitter is implemented using Finite State Machine (FSM).
-
-## IDLE STATE
-- TX remains HIGH
-- Waits for transmission request
-
-## START STATE
-- Sends start bit (LOW)
-
-## DATA STATE
-- Sends 8-bit serial data
-- LSB transmitted first
-
-## STOP STATE
-- Sends stop bit (HIGH)
-- Returns to IDLE state
-
----
-
-# UART Receiver FSM
-
-The UART receiver FSM contains the following states:
-
-## IDLE STATE
-- Waits for start bit detection
-
-## START STATE
-- Samples start bit midpoint
-
-## DATA STATE
-- Receives serial data bits
-- Reconstructs parallel data
-
-## STOP STATE
-- Verifies stop bit
-- Generates receive complete signal
 
 ---
 
@@ -170,6 +110,7 @@ The UART receiver FSM contains the following states:
 # Tools Used
 
 - Vivado
+- Synopsys VCS
 
 ---
 
@@ -189,15 +130,19 @@ The UART protocol was verified using a SystemVerilog verification environment.
 
 Verification components include:
 
-- Interface
-- Transaction
+- Interface with clocking blocks
+- Transaction class
+- Constraint-based randomization
 - Generator
 - Driver
 - Monitor
 - Scoreboard
-- Coverage
-- Assertions
-- Testbench
+- Functional Coverage
+- Assertions (SVA)
+- Mailbox communication
+- Self-checking testbench
+- Loopback verification
+- Coverage closure event
 
 ---
 
@@ -283,28 +228,28 @@ The transmitter output is connected directly to the receiver input for self-veri
 
 ---
 
-# Synthesized and Implemented Design:
+# Synthesized and Implemented Design(Using Vivado):
 
 <img width="1574" height="733" alt="image" src="https://github.com/user-attachments/assets/0ecaeffa-d8ab-4624-ae3f-854e4f759c01" />
 
 
 ---
 
-# Model Waveform
+# Model Waveform:
 
 <img width="1379" height="379" alt="image" src="https://github.com/user-attachments/assets/b12de688-9e43-4252-81fc-92cf3a431d8f" />
 
 ---
 
-# Output Waveforms
+# Output Waveform(Simulated using Synopsys VCS):
 
-<img width="1567" height="569" alt="image" src="https://github.com/user-attachments/assets/7a0dcdd5-872c-4ca9-bd99-91c1fc276fd2" />
-
+<img width="1600" height="852" alt="image" src="https://github.com/user-attachments/assets/bf09623a-8d21-4955-a9c5-96b145442167" />
 
 ---
-# Console
+# Functional Coverage:
 
-<img width="959" height="379" alt="image" src="https://github.com/user-attachments/assets/b0323a3c-fdcc-4e66-b204-fa98c95129b6" />
+<img width="1600" height="841" alt="image" src="https://github.com/user-attachments/assets/01b8b5f8-7fd6-496f-819c-1acd82bc0e8c" />
+
 
 
 # Source Files
